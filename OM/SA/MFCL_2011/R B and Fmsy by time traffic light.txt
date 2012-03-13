@@ -1,0 +1,574 @@
+##plot functions for F and B to Fmsy and Bmsy over time
+
+RgetBmsybyTime <-
+function(){
+bmsy<- getB2Bmsy()
+times <- getimes()
+times<- trunc(times)
+a <- cbind( times, bmsy)
+bmsy <- aggregate(a, list(a[,1]), mean)
+bmsy
+}
+
+setwd("F:\\mfcl\\yft\\iotc2011\\model\\final_models\\cubicsplineLL\\fmsytime-steep90")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2010
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep90.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+#RFvsBmsy.plt <-
+#function(){
+##plots quadrants
+
+##################################################################################
+
+##base-case F/Fmsy vs B/Bmsy
+
+setwd("D:\\mfcl\\yft\\iotc2010\\model\\revise1\\estM\\fmsytime-steep70")
+out <- read.table("MSYoutput.txt")
+
+par(mar=c(7,6,2,3))
+plot(c(0,0), c(0,0), ylim=c(0,2.2), xlim=c(0,3.5), type="n", ylab="", xlab="")
+polygon(c(0,1,1,0,0), c(1,1,2.2,2.2,1), col="red")
+polygon(c(1,3.5,3.5,1,1), c(1,1,2.2,2.2,1), col="orange")
+polygon(c(1,3.5,3.5,1,1), c(0,0,1,1,0), col="green")
+polygon(c(0,1,1,0,0), c(0,0,1,1,0), col="yellow")
+lines(c(0,3.5), rep(1,2), lwd=6)
+lines(c(1,1), c(0,2.2), lwd=6)
+mtext(side =1, at=1, "B=Bmsy", line=2.5, cex=1)
+mtext(side =1, at=0.25, "B<Bmsy", line=2.5, cex=1)
+mtext(side =1, at=2, "B>Bmsy", line=2.5, cex=1)
+mtext(side =1, "B/Bmsy", line=4, cex=1.5)
+mtext(side =2, at=1, "F=Fmsy", line=2.5, cex=1)
+mtext(side =2, at=0.35, "F<Fmsy", line=2.5, cex=1)
+mtext(side =2, at=1.8, "F>Fmsy", line=2.5, cex=1)
+mtext(side =2, "F/Fmsy", line=4, cex=1.5)
+mtext(side=4, at= 1.5, "Overfishing", line=0.5, cex=1.2)
+mtext(side=3, at= 0.5, "Overfished", line=0.5, cex=1.2)
+
+years <- 1972:2009
+##get ratio of b/Bmsy by year for time period
+Brat <- out[,6]
+#bmsy<- getB2Bmsy()
+#times <- getimes()
+#times<- trunc(times)
+times <- years
+#bmsy <- cbind(times, bmsy)
+#bmsy <- aggregate(a, list(a[,1]), mean)
+#Brat <- bmsy[,3]
+##includes output from RgetFmsybytime
+Frat <- out[,2]
+cols <- hsv(0.75,1:length(years)/length(years),0.8,1)
+#points(Brat[-length(years)], Frat[-length(years)], col=cols, pch=16, cex=2.5)
+points(Brat, Frat, col=cols, pch=16, cex=2.5)
+#lines(Brat, Frat, lwd=1, col="black", lty=1)
+#include lines as arrows
+for ( i in 1:(length(years)-1)){
+        arrows(Brat[i], Frat[i], Brat[i+1], Frat[i+1], angle=15, length=0.12)
+}
+#plot last year
+#points(Brat[length(years)], Frat[length(years)], col=1, pch=16, cex=1.5)
+##add year labels
+labels <- c(1950+1:12*5, 2007, 2008, 2009)
+a <- match(labels,years)
+for(i in a){
+text(Brat[i],Frat[i], as.character(years[i]), cex=0.5, col="white")
+}
+ffmsy <- 1/7.082e-001
+bbmsy <- 1.143e+000
+#lines(rep(bbmsy,2), c(1.268,1.989), col="white", lwd=4)
+#lines(c(1.119,1.546), rep(ffmsy,2),col="white", lwd=4) 
+points(bbmsy, ffmsy, pch=10, cex=3,col="white")
+
+##base-case F/Fmsy vs SB/SBmsy
+
+#setwd("E:\\mfcl\\yft\\iotc2009\\model\\fix-steepness\\fmsytime-steep70")
+setwd("D:\\mfcl\\yft\\iotc2010\\model\\revise1\\estM\\fmsytime-steep70")
+out <- read.table("MSYoutput.txt")
+
+par(mar=c(7,6,2,3))
+
+plot(c(0,0), c(0,0), ylim=c(0,2.2), xlim=c(0,3.5), type="n", ylab="", xlab="")
+polygon(c(0,1,1,0,0), c(1,1,2.2,2.2,1), col="red")
+polygon(c(1,3.5,3.5,1,1), c(1,1,2.2,2.2,1), col="orange")
+polygon(c(1,3.5,3.5,1,1), c(0,0,1,1,0), col="green")
+polygon(c(0,1,1,0,0), c(0,0,1,1,0), col="yellow")
+lines(c(0,3.5), rep(1,2), lwd=6)
+lines(c(1,1), c(0,2.2), lwd=6)
+mtext(side =1, at=1, "SB=SBmsy", line=2.5, cex=0.8)
+mtext(side =1, at=0.25, "SB<SBmsy", line=2.5, cex=0.8)
+mtext(side =1, at=2, "SB>SBmsy", line=2.5, cex=0.8)
+mtext(side =1, "SB/SBmsy", line=4, cex=1.5)
+mtext(side =2, at=1, "F=Fmsy", line=2.5, cex=1)
+mtext(side =2, at=0.35, "F<Fmsy", line=2.5, cex=1)
+mtext(side =2, at=1.8, "F>Fmsy", line=2.5, cex=1)
+mtext(side =2, "F/Fmsy", line=4, cex=1.5)
+mtext(side=4, at= 1.5, "Overfishing", line=0.5, cex=1.2)
+mtext(side=3, at= 0.5, "Overfished", line=0.5, cex=1.2)
+
+years <- 1972:2009
+##get ratio of b/Bmsy by year for time period
+Brat <- out[,7]
+#bmsy<- getB2Bmsy()
+#times <- getimes()
+#times<- trunc(times)
+times <- years
+#bmsy <- cbind(times, bmsy)
+#bmsy <- aggregate(a, list(a[,1]), mean)
+#Brat <- bmsy[,3]
+##includes output from RgetFmsybytime
+Frat <- out[,2]
+cols <- hsv(0.75,1:length(years)/length(years),0.8,1)
+# except for the last
+#points(Brat[-length(years)], Frat[-length(years)], col=cols, pch=16, cex=2.5)
+points(Brat, Frat, col=cols, pch=16, cex=2.5)
+points(Brat[length(years)], Frat[length(years)], col=cols[length(years)/2], pch=16, cex=2.5)
+#lines(Brat, Frat, lwd=1, col="black", lty=1)
+#include lines as arrows
+#for ( i in 1:(length(years)-1)){
+#        arrows(Brat[i], Frat[i], Brat[i+1], Frat[i+1], angle=15, length=0.12)
+#}
+for ( i in 1:(length(years)-2)){
+        arrows(Brat[i], Frat[i], Brat[i+1], Frat[i+1], angle=15, length=0.12)
+}
+        arrows(Brat[i+1], Frat[i+1], Brat[i+2], Frat[i+2], angle=15, length=0.12, lty=2)
+
+#plot last year
+#points(Brat[length(years)], Frat[length(years)], col=1, pch=16, cex=1.5)
+##add year labels
+labels <- c(1950+1:12*5, 2007, 2008, 2009)
+a <- match(labels,years)
+for(i in a){
+text(Brat[i],Frat[i], as.character(years[i]), cex=0.5, col="white")
+}
+ffmsy <- 1/7.082e-001
+bbmsy <- 1.289e+000
+# CI F/Fmsy
+#lines(rep(bbmsy,2), c(1.268,1.989), col="white", lwd=4)
+#CI SB/SBmsy
+#lines(c(0.89,1.42), rep(ffmsy,2),col="white", lwd=4) 
+points(bbmsy, ffmsy, pch=10, cex=3, col="white")
+
+###############################################################################
+
+
+RgetBmsybyTime <-
+function(){
+bmsy<- getB2Bmsy()
+times <- getimes()
+times<- trunc(times)
+a <- cbind( times, bmsy)
+bmsy <- aggregate(a, list(a[,1]), mean)
+bmsy
+}
+
+## ps fishery split 2003
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit\\fmsytime-steep70")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70selectLL.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery split 2003, down weight LF data
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit\\fmsytime-steep70-dwtLF")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70dwLF.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery not split
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\fmsytime-steep70")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery no split 2003, down weight LF data
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\fmsytime-steep70-dwtLF")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70dwLF.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery 3 time blocks, down weight LF data
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit2\\fmsytime-steep70")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery 3 time blocks, down weight LF data
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\high-mix\\fmsytime-steep70")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70dwLF.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+## ps fishery 3 time blocks, down weight LF data
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit2\\one-region\\fmsytime-steep70")
+
+#RgetFmsybyTime <-
+#function(){
+#runs through each year of the model and does a single iteration
+#derives F/Fmsy, MSY, and steepness at each time interval
+##first year of model
+year1 <- 1972
+##last year of model
+year2 <- 2009
+##assume quarterly timestep
+tstep <- 4
+years <- year1:year2
+mat <- matrix(NA, length(years), 7)
+mat[,1] <- years
+tseq <- rev(1:length(years))*4
+print(tseq)
+for(i in 1:length(years)){
+#for (i in 1:3){
+##time interval included in calculation flag 148
+time1 <- tseq[i]
+##excluding these years flag 155
+time2 <- tseq[i] - 4
+system(paste("C:\\cygwin\\usr\\local\\bin\\mfclo32 yft.frq steep70.par junk -switch 4 1 1 1 1 189 0 2 148",time1,"2 155", time2) )
+#time steps
+line1 <- grep("# MSY", readLines("plot-junk.rep"))
+a <- scan("plot-junk.rep", nlines=1, skip = line1+2) # F multiplier at MSY
+#convert to F/Fmsy
+mat[i,2] <- 1/a 
+mat[i,3] <- time1
+mat[i,4] <- time2
+mat[i,5] <- scan("plot-junk.rep", nlines=1, skip = line1) # MSY
+mat[i,6] <- scan("plot-junk.rep", nlines=1, skip = line1 + 10) # current Total Biomass to Total biomass at MSY
+mat[i,7] <- scan("plot-junk.rep", nlines=1, skip = line1 + 12) # current Adult Biomass to Adult Biomass at MSY
+}
+mat
+
+out <- as.data.frame(mat)
+names(out) <- c("year", "FtoFmsy", "time1", "time2", "MSY", "BtoBmsy", "SBtoSBmsy")
+
+write.table(out, "MSYoutput.txt")
+
+
+
+##base-case F/Fmsy vs B/Bmsy
+## ps fishery split 2003
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit\\fmsytime-steep70")
+## ps fishery split 2003, down weight LF data
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit\\fmsytime-steep70-dwtLF")
+## ps fishery not split
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\fmsytime-steep70")
+## ps fishery no split 2003, down weight LF data
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\fmsytime-steep70-dwtLF")
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit2\\fmsytime-steep70")
+#setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSno-split\\high-mix\\fmsytime-steep70")
+setwd("E:\\mfcl\\yft\\iotc2010\\model\\meeting\\PSsplit2\\one-region\\fmsytime-steep70")
+
+out <- read.table("MSYoutput.txt")
+
+par(mar=c(7,6,2,3))
+plot(c(0,0), c(0,0), ylim=c(0,2.2), xlim=c(0,3.5), type="n", ylab="", xlab="")
+polygon(c(0,1,1,0,0), c(1,1,2.2,2.2,1), col="red")
+polygon(c(1,3.5,3.5,1,1), c(1,1,2.2,2.2,1), col="orange")
+polygon(c(1,3.5,3.5,1,1), c(0,0,1,1,0), col="green")
+polygon(c(0,1,1,0,0), c(0,0,1,1,0), col="yellow")
+lines(c(0,3.5), rep(1,2), lwd=6)
+lines(c(1,1), c(0,2.2), lwd=6)
+mtext(side =1, at=1, "B=Bmsy", line=2.5, cex=1)
+mtext(side =1, at=0.25, "B<Bmsy", line=2.5, cex=1)
+mtext(side =1, at=2, "B>Bmsy", line=2.5, cex=1)
+mtext(side =1, "B/Bmsy", line=4, cex=1.5)
+mtext(side =2, at=1, "F=Fmsy", line=2.5, cex=1)
+mtext(side =2, at=0.35, "F<Fmsy", line=2.5, cex=1)
+mtext(side =2, at=1.8, "F>Fmsy", line=2.5, cex=1)
+mtext(side =2, "F/Fmsy", line=4, cex=1.5)
+mtext(side=4, at= 1.5, "Overfishing", line=0.5, cex=1.2)
+mtext(side=3, at= 0.5, "Overfished", line=0.5, cex=1.2)
+
+years <- 1972:2009
+##get ratio of b/Bmsy by year for time period
+Brat <- out[,6]
+#bmsy<- getB2Bmsy()
+#times <- getimes()
+#times<- trunc(times)
+times <- years
+#bmsy <- cbind(times, bmsy)
+#bmsy <- aggregate(a, list(a[,1]), mean)
+#Brat <- bmsy[,3]
+##includes output from RgetFmsybytime
+Frat <- out[,2]
+cols <- hsv(0.75,1:length(years)/length(years),0.8,1)
+#points(Brat[-length(years)], Frat[-length(years)], col=cols, pch=16, cex=2.5)
+points(Brat, Frat, col=cols, pch=16, cex=2.5)
+#lines(Brat, Frat, lwd=1, col="black", lty=1)
+#include lines as arrows
+for ( i in 1:(length(years)-1)){
+        arrows(Brat[i], Frat[i], Brat[i+1], Frat[i+1], angle=15, length=0.12)
+}
+#plot last year
+#points(Brat[length(years)], Frat[length(years)], col=1, pch=16, cex=1.5)
+##add year labels
+labels <- c(1950+1:12*5, 2007, 2008, 2009)
+a <- match(labels,years)
+for(i in a){
+text(Brat[i],Frat[i], as.character(years[i]), cex=0.5, col="white")
+}
+#ffmsy <- 1/7.082e-001
+#bbmsy <- 1.143e+000
+#lines(rep(bbmsy,2), c(1.268,1.989), col="white", lwd=4)
+#lines(c(1.119,1.546), rep(ffmsy,2),col="white", lwd=4) 
+#points(bbmsy, ffmsy, pch=10, cex=3,col="white")
+#mtext(side=3, line=0.5, "PS split, LF Sample 50")
+#mtext(side=3, line=0.5, "PS split, LF Sample 10")
+#mtext(side=3, line=0.5, "PS no split, LF Sample 50")
+mtext(side=3, line=0.5, "PS split, one region")

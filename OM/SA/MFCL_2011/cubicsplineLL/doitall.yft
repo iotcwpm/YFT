@@ -1,0 +1,264 @@
+#!/bin/sh
+#  ------------------------
+#  PHASE 0 - create initial par file
+#  ------------------------
+#
+#if [ ! -f 00.par ]; then
+  mfclo32 yft.frq yft.ini 00.par -makepar
+#fi
+#
+#  ------------------------
+#  PHASE 1 - initial par
+#  ------------------------
+#
+#if [ ! -f 01.par ]; then
+  mfclo32 yft.frq 00.par 01.par -file - <<PHASE1
+  1 149 100       # recruitment deviations penalty
+  2 113 0         # scaling init pop - turned off
+  2 177 1         # use old totpop scaling method
+  2 32 1          # and estimate the totpop parameter
+#  -999 49 20      # divide LL LF sample sizes by 20 (default)
+  1 32 2          # sets standard control
+  1 111 4         # sets likelihood function for tags to negative binomial
+  1 141 3         # sets likelihood function for LF data to normal
+  2 57 4          # sets no. of recruitments per year to 4
+  2 69 1          # sets generic movement option (now default)
+  2 93 4          # sets no. of recruitments per year to 4 (is this used?)
+  2 94 2 2 95 20  # initial age structure based on Z for 1st 20 periods
+  -999 26 2       # sets length-dependent selectivity option
+  -9999 1 4       # sets no. mixing periods for all tag release groups to 4
+ 2 144 100000     # very high catch penalty  ## this gets reset - need to set at a later phase
+# sets non-decreasing (logistic) selectivity for longline fisheries
+ -999 57 3        # uses cubic spline selectivity
+ -999 61 5        # with 5 nodes for cubic spline
+# LL
+#  -3 57 1         # logistic for all LL fisheries   
+#  -7 57 1
+# -10 57 1
+# -11 57 1
+# -13 57 1
+# grouping of fisheries with common selectivity
+   -1 24 1        
+   -2 24 2
+   -3 24 3	  # Longline fisheries have common selectivity        
+   -4 24 4        # OT fisheries have common select - LF data only available for fishery 15
+   -5 24 5        
+   -6 24 6
+   -7 24 3	  # Longline fisheries have common selectivity        
+   -8 24 7
+   -9 24 8        # TR fisheries have common select - LF data only available for fishery 15
+  -10 24 3	  # Longline fisheries have common selectivity        
+  -11 24 3	  # Longline fisheries have common selectivity        
+  -12 24 9
+  -13 24 3	  # Longline fisheries have common selectivity        
+  -14 24 4        # OT fisheries have common select - LF data only available for fishery 14
+  -15 24 8        # TR fisheries have common select - LF data only available for fishery 15
+   -16 24 10	  # 
+   -17 24 11	  # 
+   -18 24 8       # TR 3 fishery have different select - no LF data but tag data available 
+   -19 24 12	  # 
+   -20 24 13	  #
+   -21 24 14	  # 
+   -22 24 15	  # 
+   -23 24 16	  # 
+   -24 24 17	  # 
+   -25 24 18	  # 
+# grouping of fisheries with common catchability
+   -1 29 1
+   -2 29 2
+   -3 29 3     # Longline fisheries grouped      
+   -4 29 4
+   -5 29 5      
+   -6 29 6
+   -7 29 3     # Longline fisheries grouped            
+   -8 29 7      
+   -9 29 8
+  -10 29 3     # Longline fisheries grouped      
+  -11 29 3     # Longline fisheries grouped      
+  -12 29 9
+  -13 29 3     # Longline fisheries grouped      
+  -14 29 10
+  -15 29 11
+  -16 29 12
+  -17 29 13
+  -18 29 14
+  -19 29 15
+  -20 29 16
+  -21 29 17
+  -22 29 18
+  -23 29 19
+  -24 29 20
+  -25 29 21
+   -1 60 1
+   -2 60 2
+   -3 60 3     # Longline fisheries grouped      
+   -4 60 4
+   -5 60 5      
+   -6 60 6
+   -7 60 3     # Longline fisheries grouped            
+   -8 60 7      
+   -9 60 8
+  -10 60 3     # Longline fisheries grouped      
+  -11 60 3     # Longline fisheries grouped      
+  -12 60 9
+  -13 60 3     # Longline fisheries grouped      
+  -14 60 10
+  -15 60 11
+  -16 60 12
+  -17 60 13
+  -18 60 14
+  -19 60 15
+  -20 60 16
+  -21 60 17
+  -22 60 18
+  -23 60 19
+  -24 60 20
+  -25 60 21
+# grouping of fisheries for tag return data
+    -1 32 1
+    -2 32 2
+    -3 32 3
+    -4 32 4
+    -5 32 5
+    -6 32 6        # PS assoc. and unassoc. returns are grouped
+    -7 32 7
+    -8 32 6        # PS assoc. and unassoc. returns are grouped
+    -9 32 8
+   -10 32 9
+   -11 32 10
+   -12 32 11
+   -13 32 12
+   -14 32 13
+   -15 32 14
+   -16 32 15	# PS assoc. and unassoc. returns are grouped
+   -17 32 15	# PS assoc. and unassoc. returns are grouped
+   -18 32 16	
+   -19 32 17	# PS assoc. and unassoc. returns are grouped
+   -20 32 17	# PS assoc. and unassoc. returns are grouped
+   -21 32 18	# PS assoc. and unassoc. returns are grouped
+   -22 32 18	# PS assoc. and unassoc. returns are grouped
+   -23 32 19	
+   -24 32 19	# PS assoc. and unassoc. returns are grouped
+   -25 32 20
+# grouping of fisheries with common tag-reporting rates - all PS fisheries have the same tag RR
+    -1 34 1
+    -2 34 2
+    -3 34 3
+    -4 34 4
+    -5 34 5
+    -6 34 6        # PS assoc. and unassoc. returns are grouped
+    -7 34 7
+    -8 34 6        # PS assoc. and unassoc. returns are grouped
+    -9 34 8
+   -10 34 9
+   -11 34 10
+   -12 34 11
+   -13 34 12
+   -14 34 13
+   -15 34 14
+   -16 34 6	# PS assoc. and unassoc. returns are grouped
+   -17 34 6	# PS assoc. and unassoc. returns are grouped
+   -18 34 15	
+   -19 34 6	# PS assoc. and unassoc. returns are grouped
+   -20 34 6	# PS assoc. and unassoc. returns are grouped   
+   -21 34 6	# PS assoc. and unassoc. returns are grouped
+   -22 34 6	# PS assoc. and unassoc. returns are grouped
+   -23 34 6	# PS assoc. and unassoc. returns are grouped
+   -24 34 6	# PS assoc. and unassoc. returns are grouped
+   -25 34 16
+# sets penalties on tag-reporting rate priors
+    -1 35 1         # The penalties are set to be small for non PS fisheries
+    -2 35 1	    # sd = 1/sqrt(2*p)
+    -3 35 1        
+    -4 35 1 
+    -5 35 1 
+    -6 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+    -7 35 1
+    -8 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+    -9 35 1
+   -10 35 1
+   -11 35 1        
+   -12 35 1
+   -13 35 1
+   -14 35 1        
+   -15 35 1
+   -16 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -17 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -18 35 1
+   -19 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -20 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -21 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -22 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -23 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -24 35 500	     # penalty 500 approx. sd=0.03, fixed RR
+   -25 35 1
+# sets prior means for tag-reporting rates
+    -1 36 50        # Mean of 0.5 and penalty of 1 -> uninformative prior
+    -2 36 50
+    -3 36 50       
+    -4 36 50
+    -5 36 50
+    -6 36 81       # 90% RR for PS fisheries - corrected for tag retention
+    -7 36 50
+    -8 36 81       # 90% RR for PS fisheries - corrected for tag retention
+    -9 36 50
+   -10 36 50
+   -11 36 50       
+   -12 36 50
+   -13 36 50
+   -14 36 50        
+   -15 36 50
+   -16 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -17 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -18 36 50
+   -19 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -20 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -21 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -22 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -23 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -24 36 81       # 90% RR for PS fisheries - corrected for tag retention
+   -25 36 50
+# sets penalties for effort deviations (negative penalties force effort devs
+# to be zero when catch is unknown)
+ -999 13 -10      # higher for longline fisheries where effort is standardized
+   -3 13 -50
+   -7 13 -50
+  -10 13 -50
+  -11 13 -50
+  -13 13 -50
+# sets penalties for catchability deviations
+   -1 15 1       # low penalty for fabricated effort
+   -4 15 1
+  -14 15 1
+  -15 15 1
+  -18 15 1
+  -25 15 1
+  -999 33 1       # estimate tag-reporting rates
+  1 33 99         # maximum tag reporting rate for all fisheries is 0.99
+### relative weighting of length data - to achieve a sample size of 10
+-1	49	65
+-2	49	34
+-3	49	64
+-4	49	14
+-5	49	76
+-6	49	92
+-7	49	85
+-8	49	98
+-9      49      100
+-10	49	75
+-11	49	60
+-12	49	91
+-13	49	96
+-14	49	11
+-15	49	64
+-16	49	84
+-17	49	88
+-18     49      100
+-19	49	100
+-20	49	86
+-21	49	92
+-22	49	98
+-23	49	92
+-24	49	98
+-25     49      96
+PHASE1
